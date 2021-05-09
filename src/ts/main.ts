@@ -18,6 +18,10 @@ enum SquareColor {
 class Piece {
   type: PieceType;
   color: PieceColor;
+
+  constructor(color: PieceColor) {
+    this.color = color;
+  }
 }
 
 class Square {
@@ -36,11 +40,14 @@ class Board {
 
   constructor() {
     // Setup of pieces
-    this.blackPieces = new Piece[16];
-    this.whitePieces = new Piece[16];
+    this.blackPieces = new Array<Piece>(16);
+    this.whitePieces = new Array<Piece>(16);
 
-    for (let piece of this.blackPieces) piece.color = PieceColor.Black;
-    for (let piece of this.whitePieces) piece.color = PieceColor.White;
+    for (let i = 0; i < 16; ++i)
+      this.blackPieces[i] = new Piece(PieceColor.Black);
+
+    for (let i = 0; i < 16; ++i)
+      this.whitePieces[i] = new Piece(PieceColor.White);
 
     // The first eight pieces of either color are the pawns
     for (let i = 0; i < 8; ++i) {
@@ -71,13 +78,13 @@ class Board {
     this.whitePieces[15].type = PieceType.King;
 
 
-    this.squares = new Array<Array<Square>>();
+    this.squares = new Array<Array<Square>>(8);
     for (let row = 0; row < 8; ++row) {
-      this.squares[row] = new Array<Square>();
+      this.squares[row] = new Array<Square>(8);
       for (let col = 0; col < 8; ++col) {
         // Squares have alternating colors
         let color: SquareColor =
-            (row + col * 8 % 2 == 0 ? SquareColor.Dark : SquareColor.Light);
+            ((col + row * 8) % 2 == 0 ? SquareColor.Dark : SquareColor.Light);
         this.squares[row][col] = new Square(color);
       }
     }
