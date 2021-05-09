@@ -8,14 +8,15 @@
         "label": "Sass Compile",
         "type": "shell",
         "command": "node-sass src/scss/layout.scss --source-map=true -o public/css",
-        "group": "build"
+        "group": "build",
+        "problemMatcher": []
       },
       {
         "label": "Typescript Compile",
         "type": "typescript",
         "tsconfig": "tsconfig.json",
         "problemMatcher": [
-            "$tsc"
+          "$tsc"
         ],
         "group": "build"
       }

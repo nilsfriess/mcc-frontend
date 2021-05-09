@@ -1,5 +1,37 @@
-html {
-    body {
-        background: red;
-    }
+body {
+    font-family: 'Roboto', sans-serif;
+}
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(8, auto);
+    grid-template-rows: repeat(8, auto);
+    grid-gap: 0;
+
+    width: 640px;
+    height: 640px;
+    margin: 0 auto;
+
+    .square {
+        display: block;
+        width: 10vw;
+        height: 10vw;
+        max-width: 80px;
+        max-height: 80px;
+        position: relative;
+
+        .fileLabel {
+            position: absolute;
+            bottom: 2px;
+            left: 4px;
+            color: white;
+        }
+
+        .rankLabel {
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            color: white;
+        }
+    }   
 }

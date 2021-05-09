@@ -82,13 +82,70 @@ class Board {
     for (let row = 0; row < 8; ++row) {
       this.squares[row] = new Array<Square>(8);
       for (let col = 0; col < 8; ++col) {
-        // Squares have alternating colors
+        // Set square colors
         let color: SquareColor =
-            ((col + row * 8) % 2 == 0 ? SquareColor.Dark : SquareColor.Light);
+            ((row + col + 1) % 2 == 0 ? SquareColor.Dark : SquareColor.Light);
         this.squares[row][col] = new Square(color);
       }
     }
   }
+
+  importFEN(fen: String) {
+    // Extract the ranks (the are separeted by `/`)
+    const ranks: String[] = fen.split('/');
+    for (let row = 0; row < 8; ++row) {
+    }
+  }
 }
 
-const board = new Board();
+function setupSquares(boardDiv, board: Board) {
+  // Add squares to html
+  let currFile = 'A';  // Used below to display the file inside the board
+  let currRank = 8;
+  for (let row = 0; row < 8; ++row) {
+    for (let col = 0; col < 8; ++col) {
+      const square: Square = board.squares[row][col];
+
+      // Determine Color of square
+      let color = LightColor;
+      if (square.color == SquareColor.Dark) color = DarkColor;
+
+      let squareElement: HTMLSpanElement =
+          document.createElement('span') as HTMLSpanElement;
+      squareElement.style.background = color;
+      squareElement.classList.add('square');
+
+      // Add file names on first rank
+      if (row == 7) {
+        const fileLabel = document.createElement('span');
+        fileLabel.innerHTML = currFile;
+        fileLabel.classList.add('fileLabel');
+        squareElement.appendChild(fileLabel);
+
+        currFile = String.fromCharCode(currFile.charCodeAt(0) + 1);
+      }
+
+      if (col == 7) {
+        const rankLabel = document.createElement('span');
+        rankLabel.innerHTML = currRank.toString();
+        rankLabel.classList.add('rankLabel');
+        squareElement.appendChild(rankLabel);
+
+        currRank = currRank - 1;
+      }
+
+      boardDiv.appendChild(squareElement);
+    }
+  }
+}
+
+
+const DarkColor = '#7D00EB';
+const LightColor = '#968EEB';
+
+const board: Board = new Board();
+board.importFEN('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+
+const boardDiv = document.getElementsByClassName('board')[0];
+
+setupSquares(boardDiv, board);
