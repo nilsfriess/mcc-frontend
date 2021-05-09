@@ -23,14 +23,19 @@ class Piece {
 class Square {
   color: SquareColor;
   piece: Piece;
+
+  constructor(color: SquareColor) {
+    this.color = color;
+  }
 }
 
 class Board {
   blackPieces: Piece[];
   whitePieces: Piece[];
-  squares: Square[];
+  squares: Square[][];
 
   constructor() {
+    // Setup of pieces
     this.blackPieces = new Piece[16];
     this.whitePieces = new Piece[16];
 
@@ -64,6 +69,18 @@ class Board {
 
     this.whitePieces[15].type = PieceType.King;
     this.whitePieces[15].type = PieceType.King;
+
+
+    this.squares = new Array<Array<Square>>();
+    for (let row = 0; row < 8; ++row) {
+      this.squares[row] = new Array<Square>();
+      for (let col = 0; col < 8; ++col) {
+        // Squares have alternating colors
+        let color: SquareColor =
+            (row + col * 8 % 2 == 0 ? SquareColor.Dark : SquareColor.Light);
+        this.squares[row][col] = new Square(color);
+      }
+    }
   }
 }
 
