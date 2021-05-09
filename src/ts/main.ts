@@ -4,116 +4,146 @@ enum PieceType {
   Knight,
   Rook,
   Queen,
-  King
+  King,
+  None
 }
 enum PieceColor {
   Black,
   White
-}
-enum SquareColor {
-  Light,
-  Dark
 }
 
 class Piece {
   type: PieceType;
   color: PieceColor;
 
-  constructor(color: PieceColor) {
-    this.color = color;
+  constructor(type: PieceType = PieceType.None) {
+    this.type = type;
   }
-}
 
-class Square {
-  color: SquareColor;
-  piece: Piece;
+  fromFEN(fen: string) {
+    // Check if corresponds to White or Black piece
+    if (fen == fen.toUpperCase()) {  // White Piece
+      this.color = PieceColor.White;
+    } else {  // Black Piece
+      this.color = PieceColor.Black;
+    }
 
-  constructor(color: SquareColor) {
-    this.color = color;
+    fen = fen.toLowerCase();
+
+    switch (fen) {
+      case 'p':
+        this.type = PieceType.Pawn;
+        break;
+      case 'b':
+        this.type = PieceType.Bishop;
+        break;
+      case 'n':
+        this.type = PieceType.Knight;
+        break;
+      case 'r':
+        this.type = PieceType.Rook;
+        break;
+      case 'q':
+        this.type = PieceType.Queen;
+        break;
+      case 'k':
+        this.type = PieceType.King;
+        break;
+    }
+  }
+
+  toFEN(): String {
+    let FEN: String = '';
+    switch (this.type) {
+      case PieceType.Pawn:
+        FEN = 'p';
+        break;
+      case PieceType.Bishop:
+        FEN = 'b';
+        break;
+      case PieceType.Knight:
+        FEN = 'n';
+        break;
+      case PieceType.Rook:
+        FEN = 'r';
+        break;
+      case PieceType.Queen:
+        FEN = 'q';
+        break;
+      case PieceType.King:
+        FEN = 'k';
+        break;
+    }
+
+    if (this.color === PieceColor.White) FEN = FEN.toUpperCase();
+
+    return FEN;
   }
 }
 
 class Board {
-  blackPieces: Piece[];
-  whitePieces: Piece[];
-  squares: Square[][];
+  pieces: Array<Array<Piece>>;
 
-  constructor() {
-    // Setup of pieces
-    this.blackPieces = new Array<Piece>(16);
-    this.whitePieces = new Array<Piece>(16);
-
-    for (let i = 0; i < 16; ++i)
-      this.blackPieces[i] = new Piece(PieceColor.Black);
-
-    for (let i = 0; i < 16; ++i)
-      this.whitePieces[i] = new Piece(PieceColor.White);
-
-    // The first eight pieces of either color are the pawns
-    for (let i = 0; i < 8; ++i) {
-      this.blackPieces[i].type = PieceType.Pawn;
-      this.whitePieces[i].type = PieceType.Pawn;
-    }
-
-    // Setup remaining pieces
-    this.blackPieces[8].type = PieceType.Bishop;
-    this.blackPieces[9].type = PieceType.Bishop;
-    this.whitePieces[8].type = PieceType.Bishop;
-    this.whitePieces[9].type = PieceType.Bishop;
-
-    this.blackPieces[10].type = PieceType.Knight;
-    this.blackPieces[11].type = PieceType.Knight;
-    this.whitePieces[10].type = PieceType.Knight;
-    this.whitePieces[11].type = PieceType.Knight;
-
-    this.blackPieces[12].type = PieceType.Rook;
-    this.blackPieces[13].type = PieceType.Rook;
-    this.whitePieces[12].type = PieceType.Rook;
-    this.whitePieces[13].type = PieceType.Rook;
-
-    this.blackPieces[14].type = PieceType.Queen;
-    this.blackPieces[14].type = PieceType.Queen;
-
-    this.whitePieces[15].type = PieceType.King;
-    this.whitePieces[15].type = PieceType.King;
-
-
-    this.squares = new Array<Array<Square>>(8);
+  constructor(
+      fen:
+          string = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1') {
+    this.pieces = new Array<Array<Piece>>(8);
     for (let row = 0; row < 8; ++row) {
-      this.squares[row] = new Array<Square>(8);
+      this.pieces[row] = new Array<Piece>(8);
       for (let col = 0; col < 8; ++col) {
-        // Set square colors
-        let color: SquareColor =
-            ((row + col + 1) % 2 == 0 ? SquareColor.Dark : SquareColor.Light);
-        this.squares[row][col] = new Square(color);
+        this.pieces[row][col] = new Piece();
       }
     }
+
+    this.importFEN(fen);
   }
 
-  importFEN(fen: String) {
-    // Extract the ranks (the are separeted by `/`)
-    const ranks: String[] = fen.split('/');
+  // Sets the board up according to the given FEN
+  importFEN(fen: string) {
+    const fields: String[] = fen.split(' ');
+    const ranks: String[] = fields[0].split('/');
+
+    console.log(ranks);
+
+
     for (let row = 0; row < 8; ++row) {
+      let posInFEN = 0;
+      for (let col = 0; col < 8; ++col) {
+        let curr = ranks[row][posInFEN];
+        posInFEN++;
+
+        // A number means `n` empty squares
+        if (curr >= '1' && curr <= '8') {
+          const numEmptySquares = parseInt(curr);
+          for (let i = 0; i < numEmptySquares; ++i)
+            this.pieces[row][col++] = new Piece();
+          col--;  // Correct for the last increment
+        } else {
+          this.pieces[row][col].fromFEN(curr);
+        }
+      }
     }
+
+    // TODO: Process remainding fields of FEN
   }
 }
 
-function setupSquares(boardDiv, board: Board) {
+function setupSquares(
+    boardDiv, board: Board, lightColor: string, darkColor: string) {
   // Add squares to html
   let currFile = 'A';  // Used below to display the file inside the board
   let currRank = 8;
   for (let row = 0; row < 8; ++row) {
     for (let col = 0; col < 8; ++col) {
-      const square: Square = board.squares[row][col];
-
-      // Determine Color of square
-      let color = LightColor;
-      if (square.color == SquareColor.Dark) color = DarkColor;
+      let color = darkColor;
+      if ((row + col) % 2 == 0) color = lightColor;
 
       let squareElement: HTMLSpanElement =
           document.createElement('span') as HTMLSpanElement;
       squareElement.style.background = color;
       squareElement.classList.add('square');
+      const imgElement = document.createElement('IMG');
+      squareElement.appendChild(imgElement);
 
       // Add file names on first rank
       if (row == 7) {
@@ -139,13 +169,26 @@ function setupSquares(boardDiv, board: Board) {
   }
 }
 
+function putPiecesOnBoard(boardDiv, board: Board) {
+  const htmlSquare = boardDiv.querySelectorAll('img');
+  for (let row = 0; row < 8; ++row) {
+    for (let col = 0; col < 8; ++col) {
+      const piece = board.pieces[row][col];
+      if (piece.toFEN() !== '')
+        htmlSquare[8 * row + col].src = 'img/' + piece.toFEN() + '.png';
+    }
+  }
+}
+
 
 const DarkColor = '#7D00EB';
 const LightColor = '#968EEB';
 
-const board: Board = new Board();
-board.importFEN('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+const initialFEN = '8/4b3/4P3/1k4P1/8/ppK5/8/4R3 b - - 1 45';
+
+const board: Board = new Board(initialFEN);
 
 const boardDiv = document.getElementsByClassName('board')[0];
 
-setupSquares(boardDiv, board);
+setupSquares(boardDiv, board, LightColor, DarkColor);
+putPiecesOnBoard(boardDiv, board);

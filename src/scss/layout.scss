@@ -13,12 +13,14 @@ body {
     margin: 0 auto;
 
     .square {
-        display: block;
+        display: flex;
         width: 10vw;
         height: 10vw;
         max-width: 80px;
         max-height: 80px;
         position: relative;
+        align-items: center;
+        justify-content: center;
 
         .fileLabel {
             position: absolute;
@@ -32,6 +34,15 @@ body {
             top: 2px;
             right: 4px;
             color: white;
+        }
+
+        img {display:none;}
+
+        img[src] {
+            display: block;
+            width: 90%;
+            height: 90%;
+            border: none;
         }
     }   
 }
