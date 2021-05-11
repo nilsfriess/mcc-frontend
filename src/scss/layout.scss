@@ -36,9 +36,9 @@ body {
             color: white;
         }
 
-        img {display:none;}
+        img[src*="#"] {display:none;}
 
-        img[src] {
+        img {
             display: block;
             width: 90%;
             height: 90%;

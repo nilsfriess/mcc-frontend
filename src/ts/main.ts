@@ -103,8 +103,16 @@ class Board {
     const fields: String[] = fen.split(' ');
     const ranks: String[] = fields[0].split('/');
 
-    console.log(ranks);
+    console.log('New FEN: ', fen);
 
+    // reset pieces
+    this.pieces = new Array<Array<Piece>>(8);
+    for (let row = 0; row < 8; ++row) {
+      this.pieces[row] = new Array<Piece>(8);
+      for (let col = 0; col < 8; ++col) {
+        this.pieces[row][col] = new Piece();
+      }
+    }
 
     for (let row = 0; row < 8; ++row) {
       let posInFEN = 0;
@@ -171,6 +179,7 @@ function setupSquares(
 
 function putPiecesOnBoard(boardDiv, board: Board) {
   const htmlSquare = boardDiv.querySelectorAll('img');
+  htmlSquare.forEach((image) => {image.src = '#'});
   for (let row = 0; row < 8; ++row) {
     for (let col = 0; col < 8; ++col) {
       const piece = board.pieces[row][col];
@@ -181,14 +190,18 @@ function putPiecesOnBoard(boardDiv, board: Board) {
 }
 
 
-const DarkColor = '#7D00EB';
-const LightColor = '#968EEB';
+const DarkColor = '#2876AD';
+const LightColor = '#7AB9E6';
 
-const initialFEN = '8/4b3/4P3/1k4P1/8/ppK5/8/4R3 b - - 1 45';
 
-const board: Board = new Board(initialFEN);
+const board: Board = new Board(
+    'rnbqkb1r/pp2pppp/2p2n2/3p4/3PP3/2N2N2/PPP2PPP/R1BQKB1R b KQkq - 3 4');
 
 const boardDiv = document.getElementsByClassName('board')[0];
 
 setupSquares(boardDiv, board, LightColor, DarkColor);
+putPiecesOnBoard(boardDiv, board);
+
+board.importFEN(
+    '2bqkb1r/pp2pppp/2p2n2/3p4/3PP3/2N2N2/PPP2PPP/R1BQKB1R b KQkq - 3 4');
 putPiecesOnBoard(boardDiv, board);
