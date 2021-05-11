@@ -21,6 +21,15 @@ body {
         position: relative;
         align-items: center;
         justify-content: center;
+        box-sizing: border-box; 
+
+        &.highlighted {
+            border: 3px solid #333;
+        }
+
+        &.original {
+            border: 2px solid white;
+        }
 
         .fileLabel {
             position: absolute;
@@ -43,6 +52,15 @@ body {
             width: 90%;
             height: 90%;
             border: none;
+
+            &:hover {
+                cursor: pointer;
+            }
         }
-    }   
+    }
+
+    img.ghostPiece {
+        position: fixed;
+        opacity: 0.8;
+    }
 }

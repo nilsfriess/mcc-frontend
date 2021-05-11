@@ -98,6 +98,19 @@ class Board {
     this.importFEN(fen);
   }
 
+  updatePiece(oldRow: number, oldCol: number, newRow: number, newCol: number):
+      boolean {
+    if (oldRow === newRow &&
+        oldCol === newCol)  // nothing to do, piece was not moved
+      return true;
+
+    const oldPiece: Piece = this.pieces[oldRow][oldCol];
+    this.pieces[oldRow][oldCol] = new Piece(PieceType.None);
+    this.pieces[newRow][newCol] = oldPiece;
+
+    return true;  // TODO: Check if move is even legal
+  }
+
   // Sets the board up according to the given FEN
   importFEN(fen: string) {
     const fields: String[] = fen.split(' ');
@@ -148,6 +161,8 @@ function setupSquares(
 
       let squareElement: HTMLSpanElement =
           document.createElement('span') as HTMLSpanElement;
+      squareElement.dataset.row = row.toString();
+      squareElement.dataset.col = col.toString();
       squareElement.style.background = color;
       squareElement.classList.add('square');
       const imgElement = document.createElement('IMG');
@@ -177,16 +192,112 @@ function setupSquares(
   }
 }
 
-function putPiecesOnBoard(boardDiv, board: Board) {
+function updatePiecesOnBoard(boardDiv, board: Board, dragHandler: Function) {
   const htmlSquare = boardDiv.querySelectorAll('img');
   htmlSquare.forEach((image) => {image.src = '#'});
   for (let row = 0; row < 8; ++row) {
     for (let col = 0; col < 8; ++col) {
       const piece = board.pieces[row][col];
-      if (piece.toFEN() !== '')
-        htmlSquare[8 * row + col].src = 'img/' + piece.toFEN() + '.png';
+      if (piece.toFEN() !== '') {
+        const imgElement = htmlSquare[8 * row + col];
+        const imgSrc: string = 'img/' + piece.toFEN() + '.png';
+
+        imgElement.ondragstart = () => {
+          return false;
+        };
+
+        imgElement.onmousedown = (event: MouseEvent) => {
+          dragHandler(board, row, col, imgElement.parentElement, event);
+        };
+        imgElement.src = imgSrc;
+      }
     }
   }
+}
+
+function handleBoardClick(
+    board: Board, startRow: number, startCol: number, parentSquare: HTMLElement,
+    originalEvent: MouseEvent) {
+  if (document.querySelector('.ghostPiece')) {
+    return;  // if user is already dragging, don't do anything
+  }
+  console.log('Clicked on piece at row ', startRow, ' and column ', startCol);
+  // Create copy of piece that follows the mouse
+  const originalPiece = parentSquare.querySelector('img');
+  const ghostPiece = document.createElement('img');
+  ghostPiece.classList.add('ghostPiece');
+  ghostPiece.src = originalPiece.src;
+  const ghostPieceSize = {
+    width: originalPiece.getBoundingClientRect().width * 1.2,
+    height: originalPiece.getBoundingClientRect().height * 1.2
+  };
+  ghostPiece.style.width = ghostPieceSize.width.toString() + 'px';
+  ghostPiece.style.height = ghostPieceSize.height.toString() + 'px';
+
+  parentSquare.classList.add('original');
+
+  ghostPiece.ondragstart = () => {
+    return false;
+  };
+
+  const htmlBoard = parentSquare.parentElement;
+  htmlBoard.appendChild(ghostPiece);
+
+  // helper function to set pieces positon
+  const updatePositionofGhostPiece = (x: number, y: number) => {
+    ghostPiece.style.left = (x - ghostPieceSize.width / 2).toString() + 'px';
+    ghostPiece.style.top = (y - ghostPieceSize.height / 2).toString() + 'px';
+  };
+
+  const currentMouseX = originalEvent.clientX;
+  const currentMouseY = originalEvent.clientY;
+
+  updatePositionofGhostPiece(currentMouseX, currentMouseY);
+
+  // The piece should follow the mouse
+  htmlBoard.onmousemove = (event: MouseEvent) => {
+    const newX = event.clientX;
+    const newY = event.clientY;
+
+    const oldHighlightedSquare = htmlBoard.querySelector('.square.highlighted');
+    if (oldHighlightedSquare)
+      oldHighlightedSquare.classList.remove('highlighted');
+
+    const dropPosition = {x: event.clientX, y: event.clientY};
+    const targetSquare: any =
+        document.elementsFromPoint(dropPosition.x, dropPosition.y)
+            .find(element => {return element.classList.contains('square')});
+
+    if (targetSquare) targetSquare.classList.add('highlighted');
+
+    updatePositionofGhostPiece(newX, newY);
+  };
+
+  htmlBoard.onmouseup = (event) => {
+    const dropPosition = {x: event.clientX, y: event.clientY};
+    const targetSquare: any =
+        document.elementsFromPoint(dropPosition.x, dropPosition.y)
+            .find(element => {return element.classList.contains('square')});
+
+    console.log(targetSquare);
+    if (!targetSquare) {  // piece was dropped outside board
+      ghostPiece.remove();
+    } else {
+      const newRow = targetSquare.dataset.row;
+      const newCol = targetSquare.dataset.col;
+
+      board.updatePiece(startRow, startCol, newRow, newCol);
+      updatePiecesOnBoard(htmlBoard, board, handleBoardClick);
+
+      parentSquare.classList.remove('original');
+      htmlBoard.querySelector('.ghostPiece').remove();
+
+      console.log(
+          'Piece should be dropped at row ', newRow, ' and column ', newCol);
+    }
+
+    htmlBoard.onmouseup = undefined;
+  };
 }
 
 
@@ -200,8 +311,4 @@ const board: Board = new Board(
 const boardDiv = document.getElementsByClassName('board')[0];
 
 setupSquares(boardDiv, board, LightColor, DarkColor);
-putPiecesOnBoard(boardDiv, board);
-
-board.importFEN(
-    '2bqkb1r/pp2pppp/2p2n2/3p4/3PP3/2N2N2/PPP2PPP/R1BQKB1R b KQkq - 3 4');
-putPiecesOnBoard(boardDiv, board);
+updatePiecesOnBoard(boardDiv, board, handleBoardClick);
