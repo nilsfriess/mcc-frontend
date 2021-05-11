@@ -12,6 +12,8 @@ body {
     height: 640px;
     margin: 0 auto;
 
+    user-select: none;
+
     .square {
         display: flex;
         width: 10vw;
@@ -23,7 +25,7 @@ body {
         justify-content: center;
         box-sizing: border-box; 
 
-        &.highlighted {
+        &:hover {
             border: 3px solid #333;
         }
 
@@ -62,5 +64,6 @@ body {
     img.ghostPiece {
         position: fixed;
         opacity: 0.8;
+        pointer-events : none;
     }
 }

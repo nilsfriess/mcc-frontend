@@ -221,13 +221,13 @@ function handleBoardClick(
   if (document.querySelector('.ghostPiece')) {
     return;  // if user is already dragging, don't do anything
   }
-  console.log('Clicked on piece at row ', startRow, ' and column ', startCol);
   // Create copy of piece that follows the mouse
   const originalPiece = parentSquare.querySelector('img');
   const ghostPiece = document.createElement('img');
   ghostPiece.classList.add('ghostPiece');
   ghostPiece.src = originalPiece.src;
   const ghostPieceSize = {
+    // Ghost piece should be slightly larger than original piece
     width: originalPiece.getBoundingClientRect().width * 1.2,
     height: originalPiece.getBoundingClientRect().height * 1.2
   };
@@ -259,16 +259,10 @@ function handleBoardClick(
     const newX = event.clientX;
     const newY = event.clientY;
 
-    const oldHighlightedSquare = htmlBoard.querySelector('.square.highlighted');
-    if (oldHighlightedSquare)
-      oldHighlightedSquare.classList.remove('highlighted');
-
     const dropPosition = {x: event.clientX, y: event.clientY};
     const targetSquare: any =
         document.elementsFromPoint(dropPosition.x, dropPosition.y)
             .find(element => {return element.classList.contains('square')});
-
-    if (targetSquare) targetSquare.classList.add('highlighted');
 
     updatePositionofGhostPiece(newX, newY);
   };
@@ -279,7 +273,6 @@ function handleBoardClick(
         document.elementsFromPoint(dropPosition.x, dropPosition.y)
             .find(element => {return element.classList.contains('square')});
 
-    console.log(targetSquare);
     if (!targetSquare) {  // piece was dropped outside board
       ghostPiece.remove();
     } else {
@@ -291,9 +284,6 @@ function handleBoardClick(
 
       parentSquare.classList.remove('original');
       htmlBoard.querySelector('.ghostPiece').remove();
-
-      console.log(
-          'Piece should be dropped at row ', newRow, ' and column ', newCol);
     }
 
     htmlBoard.onmouseup = undefined;
