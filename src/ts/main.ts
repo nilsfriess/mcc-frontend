@@ -83,10 +83,13 @@ class Piece {
 
 class Board {
   pieces: Array<Array<Piece>>;
+  moveChecker: MoveChecker;
 
   constructor(
-      fen:
-          string = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1') {
+      fen: string = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+      serverURL: string = 'ws://localhost:5050') {
+    this.moveChecker = new MoveChecker(serverURL);
+
     this.pieces = new Array<Array<Piece>>(8);
     for (let row = 0; row < 8; ++row) {
       this.pieces[row] = new Array<Piece>(8);
@@ -99,24 +102,44 @@ class Board {
   }
 
   updatePiece(oldRow: number, oldCol: number, newRow: number, newCol: number):
-      boolean {
-    if (oldRow === newRow &&
-        oldCol === newCol)  // nothing to do, piece was not moved
-      return true;
-
-    const oldPiece: Piece = this.pieces[oldRow][oldCol];
-    this.pieces[oldRow][oldCol] = new Piece(PieceType.None);
-    this.pieces[newRow][newCol] = oldPiece;
-
-    return true;  // TODO: Check if move is even legal
+      Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      console.log(
+          'Trying to move piece...', '[', oldRow, oldCol, newRow, newCol, ']');
+      if (oldRow === newRow &&
+          oldCol === newCol) {  // nothing to do, piece was not moved
+        resolve(false);
+        console.log('Moving piece on itself.')
+      }
+      // if the old and new piece are of the same color, do nothing
+      // (this does also prevent castling by dragging the king onto the
+      // rook so it should be handled differently)
+      else if (
+          this.pieces[oldRow][oldCol].color ===
+          this.pieces[newRow][newCol].color) {
+        console.log('Moving piece on piece of same color.')
+        resolve(false);
+      } else {
+        this.moveChecker.askIfMoveIsLegal(oldRow, oldCol, newRow, newCol);
+        this.moveChecker.movePromise.then((msg) => {
+          console.log('Move checked, result: ', msg);
+          if (msg === 'LEGAL,YES') {
+            const oldPiece: Piece = this.pieces[oldRow][oldCol];
+            this.pieces[oldRow][oldCol] = new Piece(PieceType.None);
+            this.pieces[newRow][newCol] = oldPiece;
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        })
+      }
+    });
   }
 
   // Sets the board up according to the given FEN
   importFEN(fen: string) {
     const fields: String[] = fen.split(' ');
     const ranks: String[] = fields[0].split('/');
-
-    console.log('New FEN: ', fen);
 
     // reset pieces
     this.pieces = new Array<Array<Piece>>(8);
@@ -146,6 +169,34 @@ class Board {
     }
 
     // TODO: Process remainding fields of FEN
+  }
+}
+
+class MoveChecker {
+  socket: WebSocket;
+  movePromise: Promise<string>;
+
+  constructor(url: string = 'ws://localhost:8080') {
+    this.socket = new WebSocket(url, 'move_check');
+
+
+    this.movePromise = new Promise<string>((resolve, reject) => {
+      this.socket.onmessage = (msg) => {
+        this.receivedMessage(msg.data, resolve);
+      };
+    });
+  }
+
+  askIfMoveIsLegal(
+      oldRow: number, oldCol: number, newRow: number, newCol: number): void {
+    console.log('Asking server if move is legal...');
+    this.socket.send(
+        'MOVE,' + oldRow.toString() + ',' + oldCol.toString() + ',' +
+        newRow.toString() + ',' + newCol.toString())
+  }
+
+  receivedMessage(message: string, resolve: Function): void {
+    resolve(message);
   }
 }
 
@@ -279,11 +330,17 @@ function handleBoardClick(
       const newRow = targetSquare.dataset.row;
       const newCol = targetSquare.dataset.col;
 
-      board.updatePiece(startRow, startCol, newRow, newCol);
-      updatePiecesOnBoard(htmlBoard, board, handleBoardClick);
+      board.updatePiece(startRow, startCol, newRow, newCol)
+          .then(moveIsLegal => {
+            if (moveIsLegal)
+              updatePiecesOnBoard(htmlBoard, board, handleBoardClick);
 
-      parentSquare.classList.remove('original');
-      htmlBoard.querySelector('.ghostPiece').remove();
+            parentSquare.classList.remove('original');
+            htmlBoard.querySelector('.ghostPiece').remove();
+          })
+          .catch(
+              e => console.error(
+                  'An error occured while checking if the move is legal.'));
     }
 
     htmlBoard.onmouseup = undefined;
