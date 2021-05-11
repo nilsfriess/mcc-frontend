@@ -106,16 +106,10 @@ class Board {
     return new Promise((resolve, reject) => {
       console.log(
           'Trying to move piece...', '[', oldRow, oldCol, newRow, newCol, ']');
-      if (oldRow === newRow &&
-          oldCol === newCol) {  // nothing to do, piece was not moved
-        resolve(false);
-        console.log('Moving piece on itself.')
-      }
       // if the old and new piece are of the same color, do nothing
       // (this does also prevent castling by dragging the king onto the
       // rook so it should be handled differently)
-      else if (
-          this.pieces[oldRow][oldCol].color ===
+      if (this.pieces[oldRow][oldCol].color ===
           this.pieces[newRow][newCol].color) {
         console.log('Moving piece on piece of same color.')
         resolve(false);
@@ -327,8 +321,8 @@ function handleBoardClick(
     if (!targetSquare) {  // piece was dropped outside board
       ghostPiece.remove();
     } else {
-      const newRow = targetSquare.dataset.row;
-      const newCol = targetSquare.dataset.col;
+      const newRow: number = targetSquare.dataset.row;
+      const newCol: number = targetSquare.dataset.col;
 
       board.updatePiece(startRow, startCol, newRow, newCol)
           .then(moveIsLegal => {
@@ -352,8 +346,7 @@ const DarkColor = '#2876AD';
 const LightColor = '#7AB9E6';
 
 
-const board: Board = new Board(
-    'rnbqkb1r/pp2pppp/2p2n2/3p4/3PP3/2N2N2/PPP2PPP/R1BQKB1R b KQkq - 3 4');
+const board: Board = new Board();
 
 const boardDiv = document.getElementsByClassName('board')[0];
 
